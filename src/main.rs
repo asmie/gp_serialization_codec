@@ -1,4 +1,5 @@
-mod int_serializer;
+
+mod serializer;
 
 fn main() {
     println!("Hello, world!");
