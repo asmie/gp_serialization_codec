@@ -1,11 +1,9 @@
-use std::ops::{Shr, BitAnd};
-
 pub trait GPSerializer {
     // Serialize the data to a byte array
     fn gp_serialize(&self) -> Vec<u8>;
 }
 
-pub trait GPSerializerWithLength : GPSerializer {
+pub trait GPSerializerWithLength: GPSerializer {
     fn gp_serialize_with_length(&self) -> Vec<u8>;
 }
 
@@ -50,7 +48,7 @@ impl GPSerializer for u64 {
         }
 
         let mut l = 0u8;
-        let mut x = *self;
+        let x = *self;
         let mut found = false;
 
         for i in 0..8 {
@@ -78,5 +76,53 @@ impl GPSerializer for u64 {
         }
 
         bytes
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_byte_slice_serialization() {
+        let data: &[u8] = &[1, 2, 3, 4];
+        assert_eq!(data.gp_serialize(), vec![1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn test_byte_slice_serialization_with_length() {
+        let data: &[u8] = &[1, 2, 3, 4];
+        let mut expected = vec![4];
+        expected.extend_from_slice(&[1, 2, 3, 4]);
+        assert_eq!(data.gp_serialize_with_length(), expected);
+    }
+
+    #[test]
+    fn test_vec_serialization() {
+        let data: Vec<u8> = vec![1, 2, 3, 4];
+        assert_eq!(data.gp_serialize(), vec![1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn test_vec_serialization_with_length() {
+        let data: Vec<u8> = vec![1, 2, 3, 4];
+        let mut expected = vec![4];
+        expected.extend_from_slice(&[1, 2, 3, 4]);
+        assert_eq!(data.gp_serialize_with_length(), expected);
+    }
+
+    #[test]
+    fn test_u64_serialization() {
+        let value: u64 = 0;
+        assert_eq!(value.gp_serialize(), vec![0]);
+
+        let value: u64 = 1;
+        assert_eq!(value.gp_serialize(), vec![1]);
+
+        let value: u64 = 255;
+        assert_eq!(value.gp_serialize(), vec![128, 255]);
+
+        let value: u64 = 256;
+        assert_eq!(value.gp_serialize(), vec![129, 0]);
     }
 }
