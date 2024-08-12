@@ -3,6 +3,11 @@ pub trait GPDeserializer {
     fn gp_deserialize(&mut self, serialized: &[u8]);
 }
 
+pub trait GPDeserializerTrivial {
+    // Serialize the data to a byte array
+    fn gp_deserialize_trivial(&mut self, serialized: &[u8], l: u8);
+}
+
 pub trait GPDeserializerWithLength: GPDeserializer {
     fn gp_deserialize_with_length(&mut self, serialized: &[u8]);
 }
@@ -52,6 +57,16 @@ impl GPDeserializer for u64 {
     }
 }
 
+impl GPDeserializerTrivial for u32 {
+    // Deserialize the data from byte array moving byte by byte
+    fn gp_deserialize_trivial(&mut self, serialized: &[u8], l: u8) {
+        *self = 0;
+        for i in 0..l {
+            *self |= (serialized[i as usize] as u32) << (8 * i);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,5 +105,25 @@ mod tests {
         let serialized: &[u8] = &[129, 0];
         value.gp_deserialize(serialized);
         assert_eq!(value, 256);
+    }
+
+    #[test]
+    fn test_u32_deserialization() {
+        let serialized: &[u8] = &[0, 0, 0];
+        let mut value: u32 = 0;
+        value.gp_deserialize_trivial(serialized, 3);
+        assert_eq!(value, 0);
+
+        let serialized: &[u8] = &[1, 0, 0];
+        value.gp_deserialize_trivial(serialized, 3);
+        assert_eq!(value, 1);
+
+        let serialized: &[u8] = &[128, 0, 0];
+        value.gp_deserialize_trivial(serialized, 3);
+        assert_eq!(value, 128);
+
+        let serialized: &[u8] = &[255, 255, 255];
+        value.gp_deserialize_trivial(serialized, 3);
+        assert_eq!(value, 16777215);
     }
 }

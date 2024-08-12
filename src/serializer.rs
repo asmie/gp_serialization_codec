@@ -3,6 +3,11 @@ pub trait GPSerializer {
     fn gp_serialize(&self) -> Vec<u8>;
 }
 
+pub trait GPSerializerTrivial {
+    // Serialize the data to a byte array
+    fn gp_serialize_trivial(&self, l: u8) -> Vec<u8>;
+}
+
 pub trait GPSerializerWithLength: GPSerializer {
     fn gp_serialize_with_length(&self) -> Vec<u8>;
 }
@@ -79,6 +84,17 @@ impl GPSerializer for u64 {
     }
 }
 
+impl GPSerializerTrivial for u32 {
+    fn gp_serialize_trivial(&self, l: u8) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        for i in 0..l {
+            let byte = ((self >> (8 * i)) & 0xFF) as u8;
+            bytes.push(byte);
+        }
+        bytes
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -124,5 +140,20 @@ mod tests {
 
         let value: u64 = 256;
         assert_eq!(value.gp_serialize(), vec![129, 0]);
+    }
+
+    #[test]
+    fn test_u32_serialization() {
+        let value: u32 = 0;
+        assert_eq!(value.gp_serialize_trivial(1), vec![0]);
+
+        let value: u32 = 1;
+        assert_eq!(value.gp_serialize_trivial(1), vec![1]);
+
+        let value: u32 = 255;
+        assert_eq!(value.gp_serialize_trivial(2), vec![255, 0]);
+
+        let value: u32 = 256;
+        assert_eq!(value.gp_serialize_trivial(2), vec![0, 1]);
     }
 }
